@@ -61,6 +61,7 @@ func (c *Camera) Start() error {
 		if img.Empty() {
 			continue
 		}
+		c.output <- img.Clone()
 	}
 }
 

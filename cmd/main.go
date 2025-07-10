@@ -13,7 +13,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", camera.Stream)
+	mux.HandleFunc("/video", camera.Stream)
 	if err := http.ListenAndServe(":9999", mux); err != nil {
 		panic(err)
 	}
