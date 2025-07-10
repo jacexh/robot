@@ -25,6 +25,7 @@ func NewCamera() *Camera {
 }
 
 func (c *Camera) Start() error {
+	defer close(c.output)
 	cam, err := gocv.OpenVideoCapture(c.ID)
 	if err != nil {
 		return err
@@ -32,17 +33,19 @@ func (c *Camera) Start() error {
 
 	go func() {
 		slog.Info("Starting camera", "id", c.ID)
-		c.mu.RLock()
-		subs := make([]chan gocv.Mat, 0, len(c.fanouts))
-		for _, sub := range c.fanouts {
-			subs = append(subs, sub)
-		}
-		c.mu.RUnlock()
 
 		for img := range c.output {
-			for _, s := range subs {
-				s <- img.Clone()
+			c.mu.RLock()
+			pipes := make([]chan gocv.Mat, 0, len(c.fanouts))
+			for _, pipe := range c.fanouts {
+				pipes = append(pipes, pipe)
 			}
+			c.mu.RUnlock()
+
+			for _, s := range pipes {
+				s <- img
+			}
+			slog.Info("sent frame")
 		}
 	}()
 
